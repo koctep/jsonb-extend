@@ -1,0 +1,5 @@
+postgresql-9.4-jsonb-extend (1.0-1) unstable; urgency=low
+
+  * Initial release (Closes: #nnnn)  <nnnn is the bug number of your ITP>
+
+ -- Ilya Ashchepkov <koctep@gmail.com>  Thu, 25 Sep 2014 08:57:03 +0700

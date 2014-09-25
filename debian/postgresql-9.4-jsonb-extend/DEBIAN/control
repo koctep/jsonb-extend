@@ -1,0 +1,11 @@
+Package: postgresql-9.4-jsonb-extend
+Version: 1.0-1
+Architecture: amd64
+Maintainer: Ilya Ashchepkov <koctep@gmail.com>
+Installed-Size: 65
+Depends: libc6 (>= 2.4)
+Section: misc
+Priority: optional
+Homepage: https://github.com/koctep/jsonb-extend
+Description: PostgreSQL jsonb_extend function
+ PostgreSQL jsonb_extend function

@@ -1,0 +1,15 @@
+Source: postgresql-9.4-jsonb-extend
+Section: misc
+Priority: optional
+Maintainer: Ilya Ashchepkov <koctep@gmail.com>
+Build-Depends: debhelper (>= 9)
+Standards-Version: 3.9.5
+Homepage: https://github.com/koctep/jsonb-extend
+#Vcs-Git: git://anonscm.debian.org/collab-maint/postgresql-9.4-jsonb-extend.git
+#Vcs-Browser: http://anonscm.debian.org/?p=collab-maint/postgresql-9.4-jsonb-extend.git;a=summary
+
+Package: postgresql-9.4-jsonb-extend
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: PostgreSQL jsonb_extend function
+ PostgreSQL jsonb_extend function

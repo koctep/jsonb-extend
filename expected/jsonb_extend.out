@@ -1,0 +1,89 @@
+CREATE EXTENSION jsonb_extend;
+select jsonb_extend('1'::jsonb, '[]'::jsonb);
+ERROR:  jsonb_extend: cannot extend scalar
+select jsonb_extend('{"1": 2}'::jsonb, '[]'::jsonb);
+ERROR:  jsonb_extend: object should be extended by object
+select jsonb_extend('{}'::jsonb, '{}'::jsonb);
+ jsonb_extend 
+--------------
+ {}
+(1 row)
+
+select jsonb_extend('[]'::jsonb, '[]'::jsonb);
+ jsonb_extend 
+--------------
+ []
+(1 row)
+
+select jsonb_extend('[]'::jsonb, '{}'::jsonb);
+ jsonb_extend 
+--------------
+ [{}]
+(1 row)
+
+select jsonb_extend('[]'::jsonb, '1'::jsonb);
+ jsonb_extend 
+--------------
+ [1]
+(1 row)
+
+select jsonb_extend('[]'::jsonb, '"string"'::jsonb);
+ jsonb_extend 
+--------------
+ ["string"]
+(1 row)
+
+select jsonb_extend('{"a": 1}'::jsonb, '{"b": 2}'::jsonb);
+   jsonb_extend   
+------------------
+ {"a": 1, "b": 2}
+(1 row)
+
+select jsonb_extend('[1]'::jsonb, '[2]'::jsonb);
+ jsonb_extend 
+--------------
+ [1, 2]
+(1 row)
+
+select jsonb_extend('[1]'::jsonb, '2'::jsonb);
+ jsonb_extend 
+--------------
+ [1, 2]
+(1 row)
+
+select jsonb_extend('[1]'::jsonb, '{"a": 2}'::jsonb);
+ jsonb_extend  
+---------------
+ [1, {"a": 2}]
+(1 row)
+
+select jsonb_extend('{"a": 1}'::jsonb, '{"b": 2}'::jsonb);
+   jsonb_extend   
+------------------
+ {"a": 1, "b": 2}
+(1 row)
+
+select jsonb_extend('{"a": 1}'::jsonb, '{"b": 2, "a": 3}'::jsonb);
+   jsonb_extend   
+------------------
+ {"a": 3, "b": 2}
+(1 row)
+
+select jsonb_extend('{"a": 1, "b": 3}'::jsonb, '{"b": 2}'::jsonb);
+   jsonb_extend   
+------------------
+ {"a": 1, "b": 2}
+(1 row)
+
+select jsonb_extend('{"a": 1, "b": 2}'::jsonb, '{"b": {"c": 3}}'::jsonb);
+      jsonb_extend       
+-------------------------
+ {"a": 1, "b": {"c": 3}}
+(1 row)
+
+select jsonb_extend('{"a": 1, "b": {"c": 3}}'::jsonb, '{"b": {"d": 4}}'::jsonb);
+      jsonb_extend       
+-------------------------
+ {"a": 1, "b": {"d": 4}}
+(1 row)
+

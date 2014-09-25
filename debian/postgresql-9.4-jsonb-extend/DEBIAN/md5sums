@@ -1,0 +1,7 @@
+62f14d41c2957a9210a2561d7f25112e  usr/lib/postgresql/9.4/lib/jsonb_extend.so
+d1431d564f68338c9909b3cef4ec4515  usr/share/doc/postgresql-9.4-jsonb-extend/README.Debian
+55ac89e2b52e02ce1a4975b184ac4488  usr/share/doc/postgresql-9.4-jsonb-extend/changelog.Debian.gz
+944c9d928080e7617a2566ac79e6082a  usr/share/doc/postgresql-9.4-jsonb-extend/copyright
+c0b9f497dd18928927c121e79300f3bb  usr/share/postgresql/9.4/extension/jsonb_extend--1.0.sql
+23d5ad3908fc2f64f37c81270106234e  usr/share/postgresql/9.4/extension/jsonb_extend--unpackaged--1.0.sql
+76c3fe28ab6094937de273d3f65f39d6  usr/share/postgresql/9.4/extension/jsonb_extend.control
