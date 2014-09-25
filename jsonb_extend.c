@@ -14,8 +14,10 @@
 
 PG_MODULE_MAGIC;
 
+/* export */
 PG_FUNCTION_INFO_V1(jsonb_extend);
 
+/* internal functions */
 JsonbParseState *JsonbCopyValues(JsonbParseState *state, Jsonb *object, bool copyToken);
 
 /*
@@ -23,6 +25,19 @@ JsonbParseState *JsonbCopyValues(JsonbParseState *state, Jsonb *object, bool cop
  *
  * Creates new JsonbValue coping all entries from input objects/arrays/scalars
  * JsonbValueToJsonb provides "one key - one value, last value wins"
+ *
+ ********** JavaScript code for objects
+ * function jsonb_extend() {
+ *  var res = {};
+ *  var i = 0, len = arguments.length;
+ *  var key;
+ *
+ *  for (i; i < len; i++)
+ *    for (key in arguments[i])
+ *      res[key] = arguments[i][key];
+ *  return res;
+ * }
+ ********** End of JavaScript code
  */
 Datum
 jsonb_extend(PG_FUNCTION_ARGS)
