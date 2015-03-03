@@ -1,5 +1,5 @@
 Package: postgresql-9.4-jsonb-extend
-Version: 1.0-1
+Version: 1.1-1
 Architecture: amd64
 Maintainer: Ilya Ashchepkov <koctep@gmail.com>
 Installed-Size: 65

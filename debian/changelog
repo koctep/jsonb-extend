@@ -1,3 +1,16 @@
+postgresql-9.4-jsonb-extend (1.1-1) stable; urgency=medium
+
+  * Fixed crashing when latest is object and yearlier is value/array
+    for the same key
+
+ -- Ilya Ashchepkov <koctep@gmail.com>  Tue, 03 Mar 2015 21:40:16 +0600
+
+postgresql-9.4-jsonb-extend (1.1) unstable; urgency=low
+
+  * added jsonb_deep_extend(jsonb, jsonb, bool default false)
+
+ -- Ilya Ashchepkov <koctep@gmail.com>  Tue, 03 Mar 2015 18:53:01 +0600
+
 postgresql-9.4-jsonb-extend (1.0-1) unstable; urgency=low
 
   * Initial release (Closes: #nnnn)  <nnnn is the bug number of your ITP>
