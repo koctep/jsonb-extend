@@ -56,10 +56,10 @@ SELECT jsonb_deep_extend('{"a": {"b": 6}}'::jsonb, '{"a": {"c": 7}}'::jsonb) AS 
 ## Installation
 
  1. Clone source:  
-```sh
-git clone https://github.com/koctep/jsonb-extend.git
-cd jsonb-extend
-```
+ ```sh
+ git clone https://github.com/koctep/jsonb-extend.git
+ cd jsonb-extend
+ ```
 
  2. Build and install:  
  ```sh
