@@ -68,9 +68,9 @@ SELECT jsonb_deep_extend('{"a": {"b": 6}}'::jsonb, '{"a": {"c": 7}}'::jsonb) AS 
  ```
  
  3. Enable `jsonb_extend` extension for your database:  
-```sql
-CREATE EXTENSION jsonb_extend;
-```
+ ```sql
+ CREATE EXTENSION jsonb_extend;
+ ```
 ### Building a debian package (example for Ubuntu Linux 14.04)
  
  Instead of `step 2` do:
