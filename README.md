@@ -55,8 +55,26 @@ SELECT jsonb_deep_extend('{"a": {"b": 6}}'::jsonb, '{"a": {"c": 7}}'::jsonb) AS 
 
 ## Installation
 
-### Building a debian package (example for Ubuntu Linux 14.04)
+ 1. Clone source:  
+```sh
+git clone https://github.com/koctep/jsonb-extend.git
+cd jsonb-extend
+```
 
+ 2. Build and install:  
+ ```sh
+ make USE_PGXS=1
+ make USE_PGXS=1 install
+ ```
+ 
+ 3. Enable `jsonb_extend` extension for your database:  
+```sql
+CREATE EXTENSION jsonb_extend;
+```
+### Building a debian package (example for Ubuntu Linux 14.04)
+ 
+ Instead of `step 2` do:
+ 
  1. [Add official PostgreSQL repository](https://wiki.postgresql.org/wiki/Apt) to your system if necessary.
 
  2. Install required dependencies for build:  
@@ -64,23 +82,12 @@ SELECT jsonb_deep_extend('{"a": {"b": 6}}'::jsonb, '{"a": {"c": 7}}'::jsonb) AS 
     sudo apt-get install git debhelper postgresql-server-dev-9.4 devscripts
     ```
 
- 3. Clone source and go to it:  
-    ```sh
-    git clone https://github.com/koctep/jsonb-extend.git
-    cd jsonb-extend
-    ```
-
- 4. Build a package:  
+ 3. Build a package:  
     ```sh
     debuild -i -us -uc -b
     ```
 
- 5. Generated .deb will be placed in parent directory. You may install it with command like:  
+ 4. Generated .deb will be placed in parent directory. You may install it with command like:  
     ```sh
     dpkg -i ../postgresql-9.4-jsonb-extend_1.0-1_amd64.deb
     ```
-
- 6. Enable `jsonb_extend` extension for your database:  
-```sql
-CREATE EXTENSION jsonb_extend;
-```
