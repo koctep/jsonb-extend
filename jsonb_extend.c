@@ -11,6 +11,8 @@
 #include <postgres.h>
 
 #include <utils/jsonb.h>
+#include <utils/lsyscache.h>
+#include <access/tupmacs.h>
 
 PG_MODULE_MAGIC;
 
@@ -47,18 +49,31 @@ JsonbValue *pushJsonbValue1(JsonbParseState **pstate, JsonbIteratorToken seq, Js
 Datum
 jsonb_extend(PG_FUNCTION_ARGS)
 {
-  int nargs = PG_NARGS(),
-      i,
-      type;
+  bool            variadic= get_fn_expr_variadic(fcinfo->flinfo);
+  ArrayType       *arr    = variadic && (PG_NARGS() > 0) ? PG_GETARG_ARRAYTYPE_P(0) : NULL;
+  int             nargs   = variadic ? ArrayGetNItems(ARR_NDIM(arr), ARR_DIMS(arr)) : PG_NARGS(),
+                  i,
+                  type;
+  int16           typlen;
+  char            typalign;
+  bool            typbyval,
+                  copyToken= false;
+  Jsonb           *first,
+                  *current;
+  JsonbValue      *res;
+  JsonbParseState *state  = NULL;
 
-  Jsonb *first = PG_GETARG_JSONB(0),
-        *current;
+  if (nargs == 0)
+    PG_RETURN_NULL();
 
-  JsonbValue *res;
+  if (variadic) {
+    get_typlenbyvalalign(ARR_ELEMTYPE(arr), &typlen, &typbyval, &typalign);
+    first = (Jsonb *) ARR_DATA_PTR(arr);
+  } else
+    first = PG_GETARG_JSONB(0);
 
-  JsonbParseState *state = NULL;
-
-  bool copyToken = false;
+  if (nargs == 1)
+    PG_RETURN_JSONB(first);
 
   /* Scalar as first object may be useful only if we want to prepend an array */
   if (JB_ROOT_IS_SCALAR(first))
@@ -69,7 +84,16 @@ jsonb_extend(PG_FUNCTION_ARGS)
 
   for (i = 0; i < nargs; i++)
   {
-    current = PG_GETARG_JSONB(i);
+    if (i == 0)
+      current = first;
+    else {
+      if (variadic) {
+        current = (Jsonb *)att_addlength_pointer((char *) current, typlen, (char *) current);
+        current = (Jsonb *)att_align_nominal((char *)current, typalign);
+      } else {
+        current = PG_GETARG_JSONB(i);
+      }
+    }
 
     if (JB_ROOT_IS_OBJECT(first) && !JB_ROOT_IS_OBJECT(current))
       elog(ERROR, "jsonb_extend: object should be extended by object");

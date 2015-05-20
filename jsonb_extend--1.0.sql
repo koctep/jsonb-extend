@@ -3,7 +3,7 @@
 -- complain if script is sourced in psql, rather than via CREATE EXTENSION
 \echo Use "CREATE EXTENSION jsonb_extend" to load this file. \quit
 
-CREATE FUNCTION jsonb_extend(jsonb, jsonb)
+CREATE FUNCTION jsonb_extend(variadic jsonb[])
 RETURNS jsonb
 AS '$libdir/jsonb_extend'
 LANGUAGE C STRICT IMMUTABLE;
