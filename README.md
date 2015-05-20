@@ -47,7 +47,7 @@ SELECT jsonb_extend('{"a": {"b": 6}}'::jsonb, '{"a": {"c": 7}}'::jsonb) AS new_j
  {"a": {"c": 7}}
 ```
 ```sql
-SELECT jsonb_deep_extend('{"a": {"b": 6}}'::jsonb, '{"a": {"c": 7}}'::jsonb) AS new_jsonb;
+SELECT jsonb_deep_extend(false, '{"a": {"b": 6}}'::jsonb, '{"a": {"c": 7}}'::jsonb) AS new_jsonb;
         new_jsonb
 -------------------------
  {"a": {"b": 6, "c": 7}}
