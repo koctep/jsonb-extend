@@ -170,23 +170,53 @@ JsonbCopyIteratorValues(JsonbParseState *state, JsonbIterator *it, bool copyToke
 Datum
 jsonb_deep_extend(PG_FUNCTION_ARGS)
 {
-  int skipNested = PG_GETARG_BOOL(0);
-  int nargs = PG_NARGS() - 1;
-  Jsonb *first = PG_GETARG_JSONB(1),
-        *object;
-  JsonbValue val[nargs];
-  JsonbIterator *it[nargs];
-  int r[nargs], current = 0, i, cl = 0;
-  int lvl[nargs];
-  JsonbParseState *state = NULL;
-  JsonbValue *res, key;
+  bool            variadic  = get_fn_expr_variadic(fcinfo->flinfo),
+                  typbyval;
+  int16           typlen;
+  char            typalign;
+  ArrayType       *arr      = variadic && (PG_NARGS() > 1) ? PG_GETARG_ARRAYTYPE_P(1) : NULL;
+  int             nargs     = variadic ? ArrayGetNItems(ARR_NDIM(arr), ARR_DIMS(arr)) : PG_NARGS() - 1,
+                  skipNested= PG_GETARG_BOOL(0),
+                  cl        = 0,
+                  current   = 0,
+                  r[nargs],
+                  i,
+                  lvl[nargs];
+  Jsonb           *first,
+                  *object;
+  JsonbValue      val[nargs],
+                  *res,
+                  key;
+  JsonbIterator   *it[nargs];
+  JsonbParseState *state    = NULL;
+
+  if (nargs == 0)
+    PG_RETURN_NULL();
+
+  if (variadic) {
+    get_typlenbyvalalign(ARR_ELEMTYPE(arr), &typlen, &typbyval, &typalign);
+    first = (Jsonb *) ARR_DATA_PTR(arr);
+  } else
+    first = PG_GETARG_JSONB(1);
+
+  if (nargs == 1)
+    PG_RETURN_JSONB(first);
 
   if (!JB_ROOT_IS_OBJECT(first))
     elog(ERROR, "jsonb_deep_extend: implemented only for objects");
 
   for (i = 0; i < nargs; i++) {
     lvl[i] = 0;
-    object = i == 0 ? first : PG_GETARG_JSONB(i + 1);
+    if (i == 0) {
+      object = first;
+    } else {
+      if (variadic) {
+        object = (Jsonb *)att_addlength_pointer((char *) object, typlen, (char *) object);
+        object = (Jsonb *)att_align_nominal((char *)object, typalign);
+      } else {
+        object = PG_GETARG_JSONB(i + 1);
+      }
+    }
     it[i] = JsonbIteratorInit(&(object->root));
     r[i] = jsonb_inc(&it[i], &val[i], skipNested, &lvl[i]);
     r[i] = jsonb_inc(&it[i], &val[i], skipNested, &lvl[i]);
