@@ -1,4 +1,22 @@
 CREATE EXTENSION jsonb_extend;
+select jsonb_extend(variadic '{}'::jsonb[]);
+ jsonb_extend 
+--------------
+ 
+(1 row)
+
+select jsonb_extend('1'::jsonb);
+ jsonb_extend 
+--------------
+ 1
+(1 row)
+
+select jsonb_extend('[0]'::jsonb, '1'::jsonb, '2'::jsonb);
+ jsonb_extend 
+--------------
+ [0, 1, 2]
+(1 row)
+
 select jsonb_extend('1'::jsonb, '[]'::jsonb);
 ERROR:  jsonb_extend: cannot extend scalar
 select jsonb_extend('{"1": 2}'::jsonb, '[]'::jsonb);
@@ -147,6 +165,18 @@ select jsonb_deep_extend(false, '{"a": {"b": 1, "c": 2}}'::jsonb, '{"a": 23}'::j
  {"a": 23}
 (1 row)
 
+select jsonb_deep_extend(false, '{"b": 2}'::jsonb, '{"a": 1}'::jsonb, '{"d": 4}', '{"c": 3}');
+        jsonb_deep_extend         
+----------------------------------
+ {"a": 1, "b": 2, "c": 3, "d": 4}
+(1 row)
+
+select jsonb_deep_extend(false, '{"a": {"b": 1}}', '{"a": {"c": 2}}', '{"a": {"d": 3}}');
+        jsonb_deep_extend        
+---------------------------------
+ {"a": {"b": 1, "c": 2, "d": 3}}
+(1 row)
+
 select jsonb_deep_extend(true, '{}'::jsonb, '{}'::jsonb);
  jsonb_deep_extend 
 -------------------
@@ -205,5 +235,11 @@ select jsonb_deep_extend(true, '{"a": {"b": 1, "c": 2}}'::jsonb, '{"a": 23}'::js
  jsonb_deep_extend 
 -------------------
  {"a": 23}
+(1 row)
+
+select jsonb_deep_extend(true, '{"a": {"b": 1}}', '{"a": {"c": 2}}', '{"a": {"d": 3}}');
+ jsonb_deep_extend 
+-------------------
+ {"a": {"d": 3}}
 (1 row)
 
