@@ -8,7 +8,7 @@ RETURNS jsonb
 AS '$libdir/jsonb_extend'
 LANGUAGE C STRICT IMMUTABLE;
 
-CREATE FUNCTION jsonb_deep_extend(jsonb, jsonb, bool default false)
+CREATE FUNCTION jsonb_deep_extend(bool, jsonb, jsonb)
 RETURNS jsonb
 AS '$libdir/jsonb_extend'
 LANGUAGE C STRICT IMMUTABLE;

@@ -23,6 +23,7 @@ JsonbParseState *JsonbCopyObjectValues(JsonbParseState *state, Jsonb *object, bo
 JsonbParseState *JsonbCopyIteratorValues(JsonbParseState *state, JsonbIterator *it, bool copyToken);
 int jsonb_inc(JsonbIterator **it, JsonbValue *val, bool skipNested, int *lvl);
 int jsonb_key_cmp(JsonbValue *val1, JsonbValue *val2);
+JsonbValue *pushJsonbValue1(JsonbParseState **pstate, JsonbIteratorToken seq, JsonbValue *scalarVal);
 
 /*
  * JsonbCopyValue
@@ -64,7 +65,7 @@ jsonb_extend(PG_FUNCTION_ARGS)
     elog(ERROR, "jsonb_extend: cannot extend scalar");
 
   type = JB_ROOT_IS_OBJECT(first) ? WJB_BEGIN_OBJECT : WJB_BEGIN_ARRAY;
-  pushJsonbValue(&state, type, NULL);
+  pushJsonbValue1(&state, type, NULL);
 
   for (i = 0; i < nargs; i++)
   {
@@ -79,7 +80,7 @@ jsonb_extend(PG_FUNCTION_ARGS)
   }
 
   type = JB_ROOT_IS_OBJECT(first) ? WJB_END_OBJECT : WJB_END_ARRAY;
-  res = pushJsonbValue(&state, type, NULL);
+  res = pushJsonbValue1(&state, type, NULL);
   PG_RETURN_JSONB(JsonbValueToJsonb(res));
 }
 
@@ -103,7 +104,7 @@ JsonbCopyIteratorValues(JsonbParseState *state, JsonbIterator *it, bool copyToke
   r = JsonbIteratorNext(&it, &val, skipNested);
 
   if (copyToken)
-    pushJsonbValue(&state, r, &val);
+    pushJsonbValue1(&state, r, &val);
 
   for (r = JsonbIteratorNext(&it, &val, skipNested);
         r != WJB_DONE &&
@@ -116,17 +117,17 @@ JsonbCopyIteratorValues(JsonbParseState *state, JsonbIterator *it, bool copyToke
       case WJB_ELEM:
       case WJB_KEY:
       case WJB_VALUE:
-        pushJsonbValue(&state, r, &val);
+        pushJsonbValue1(&state, r, &val);
         break;
       case WJB_BEGIN_OBJECT:
       case WJB_BEGIN_ARRAY:
         lvl++;
-        pushJsonbValue(&state, r, &val);
+        pushJsonbValue1(&state, r, &val);
         break;
       case WJB_END_OBJECT:
       case WJB_END_ARRAY:
         lvl--;
-        pushJsonbValue(&state, r, &val);
+        pushJsonbValue1(&state, r, &val);
         break;
       default:
         ereport(WARNING, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
@@ -134,7 +135,7 @@ JsonbCopyIteratorValues(JsonbParseState *state, JsonbIterator *it, bool copyToke
     }
   }
   if (copyToken && (r != WJB_DONE))
-    pushJsonbValue(&state, r, &val);
+    pushJsonbValue1(&state, r, &val);
   if (r != WJB_DONE)
     r = JsonbIteratorNext(&it, &val, skipNested);
   if (r != WJB_DONE)
@@ -145,31 +146,32 @@ JsonbCopyIteratorValues(JsonbParseState *state, JsonbIterator *it, bool copyToke
 Datum
 jsonb_deep_extend(PG_FUNCTION_ARGS)
 {
-  Jsonb *first = PG_GETARG_JSONB(0),
+  int skipNested = PG_GETARG_BOOL(0);
+  int nargs = PG_NARGS() - 1;
+  Jsonb *first = PG_GETARG_JSONB(1),
         *object;
-  int skipNested = PG_GETARG_BOOL(2);
-  JsonbValue val[2];
-  JsonbIterator *it[2];
-  int r[2], current = 0, i, cl = 0;
-  //  int skipNested = false;
-  int lvl[2] = {0, 0};
+  JsonbValue val[nargs];
+  JsonbIterator *it[nargs];
+  int r[nargs], current = 0, i, cl = 0;
+  int lvl[nargs];
   JsonbParseState *state = NULL;
   JsonbValue *res, key;
 
   if (!JB_ROOT_IS_OBJECT(first))
     elog(ERROR, "jsonb_deep_extend: implemented only for objects");
 
-  for (i = 0; i < 2; i++) {
-    object = i == 0 ? first : PG_GETARG_JSONB(i);
+  for (i = 0; i < nargs; i++) {
+    lvl[i] = 0;
+    object = i == 0 ? first : PG_GETARG_JSONB(i + 1);
     it[i] = JsonbIteratorInit(&(object->root));
     r[i] = jsonb_inc(&it[i], &val[i], skipNested, &lvl[i]);
     r[i] = jsonb_inc(&it[i], &val[i], skipNested, &lvl[i]);
   }
-  res = pushJsonbValue(&state, WJB_BEGIN_OBJECT, NULL);
+  res = pushJsonbValue1(&state, WJB_BEGIN_OBJECT, NULL);
 
   while(true)
   {
-    for (i = 0, current = 0; i < 2; i++) {
+    for (i = 0, current = 0; i < nargs; i++) {
       while ((r[i] != WJB_KEY) && (r[i] != WJB_DONE))
         r[i] = jsonb_inc(&it[i], &val[i], skipNested, &lvl[i]);
       if ((lvl[i] == lvl[current] && r[i] == WJB_KEY && jsonb_key_cmp(&val[i], &val[current]) <= 0)
@@ -178,8 +180,8 @@ jsonb_deep_extend(PG_FUNCTION_ARGS)
         current = i;
     }
     if (cl > lvl[current])
-      for (cl; cl > lvl[current]; cl--)
-        res = pushJsonbValue(&state, WJB_END_OBJECT, NULL);
+      for (; cl > lvl[current]; cl--)
+        res = pushJsonbValue1(&state, WJB_END_OBJECT, NULL);
     if (r[current] == WJB_DONE)
       break;
 
@@ -187,14 +189,14 @@ jsonb_deep_extend(PG_FUNCTION_ARGS)
     key.val.string.len = val[current].val.string.len;
     key.val.string.val = palloc(key.val.string.len);
     strncpy(key.val.string.val, val[current].val.string.val, key.val.string.len);
-    res = pushJsonbValue(&state, r[current], &val[current]);
-    for (i = 0; i < 2; i++)
+    res = pushJsonbValue1(&state, r[current], &val[current]);
+    for (i = 0; i < nargs; i++)
       if (cl == lvl[i] && jsonb_key_cmp(&key, &val[i]) == 0)
         r[i] = jsonb_inc(&it[i], &val[i], skipNested, &lvl[i]);
     if (r[current] == WJB_BEGIN_OBJECT) {
-      res = pushJsonbValue(&state, WJB_BEGIN_OBJECT, NULL);
+      res = pushJsonbValue1(&state, WJB_BEGIN_OBJECT, NULL);
       r[current] = jsonb_inc(&it[current], &val[current], skipNested, &lvl[current]);
-      for (i = 0; i < 2; i++) {
+      for (i = 0; i < nargs; i++) {
         if (r[i] == WJB_KEY) continue;
         if (lvl[i] < cl) continue;
         if (i < current)
@@ -211,7 +213,7 @@ jsonb_deep_extend(PG_FUNCTION_ARGS)
           break;
         if (lvl[current] == cl && r[current] == WJB_KEY)
           break;
-        res = pushJsonbValue(&state, r[current], &val[current]);
+        res = pushJsonbValue1(&state, r[current], &val[current]);
         r[current] = jsonb_inc(&it[current], &val[current], skipNested, &lvl[current]);
       }
       for (i = 0; i < current; i++) {
@@ -250,4 +252,13 @@ jsonb_key_cmp(JsonbValue *val1, JsonbValue *val2)
   if (val1->val.string.len > val2->val.string.len)
     return  1;
   return strncmp(val1->val.string.val, val2->val.string.val, val1->val.string.len);
+}
+
+JsonbValue *
+pushJsonbValue1(JsonbParseState **pstate, JsonbIteratorToken seq,
+			   JsonbValue *scalarVal)
+{
+  if (seq == WJB_BEGIN_ARRAY || seq == WJB_BEGIN_OBJECT || seq == WJB_END_ARRAY || seq == WJB_END_OBJECT)
+    return pushJsonbValue(pstate, seq, NULL);
+  return pushJsonbValue(pstate, seq, scalarVal);
 }
