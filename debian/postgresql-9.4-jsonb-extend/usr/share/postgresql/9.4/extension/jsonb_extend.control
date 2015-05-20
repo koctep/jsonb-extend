@@ -1,5 +1,0 @@
-# test_parser extension
-comment = 'jsonb_extend function'
-default_version = '1.0'
-module_pathname = '$libdir/jsonb_extend'
-relocatable = true
